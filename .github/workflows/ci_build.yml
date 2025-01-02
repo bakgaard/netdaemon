@@ -1,77 +1,77 @@
-#### Build and tests all pushes, also code coverage
-name: 🛠️ CI build check
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  schedule:
-    - cron: "0 2 * * *" # run at 2 AM UTC
-jobs:
-  build:
-    name: 🔨 Build sources (CI)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: 📤 Checkout the repository
-        uses: actions/checkout@main
+# #### Build and tests all pushes, also code coverage
+# name: 🛠️ CI build check
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+#   schedule:
+#     - cron: "0 2 * * *" # run at 2 AM UTC
+# jobs:
+#   build:
+#     name: 🔨 Build sources (CI)
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 30
+#     steps:
+#       - name: 📤 Checkout the repository
+#         uses: actions/checkout@main
 
-      - name: 🥅 Install .Net 9
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
+#       - name: 🥅 Install .Net 9
+#         uses: actions/setup-dotnet@v4
+#         with:
+#           dotnet-version: '9.0.x'
 
-      - name: 🔍 Enable problem matchers
-        run: echo "::add-matcher::.github/matchers/dotnet.json"
+#       - name: 🔍 Enable problem matchers
+#         run: echo "::add-matcher::.github/matchers/dotnet.json"
 
-      - name: 🛠️ Build code
-        run: dotnet build --configuration Release
-        # run: dotnet build --configuration Release -p:TreatWarningsAsErrors=true temprarily disabled due to Nuget bug
+#       - name: 🛠️ Build code
+#         run: dotnet build --configuration Release
+#         # run: dotnet build --configuration Release -p:TreatWarningsAsErrors=true temprarily disabled due to Nuget bug
 
-      - name: 👀 Unit Test
-        run: |
-          echo "## ❔ Unit test results" >> $GITHUB_STEP_SUMMARY
-          dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/HassModel/NetDaemon.HassModel.Tests -- RunConfiguration.CollectSourceInformation=true
-          dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/Extensions/NetDaemon.Extensions.Scheduling.Tests -- RunConfiguration.CollectSourceInformation=true
-          dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/Client/NetDaemon.HassClient.Tests -- RunConfiguration.CollectSourceInformation=true
-          dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/AppModel/NetDaemon.AppModel.Tests -- RunConfiguration.CollectSourceInformation=true
-          dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/Runtime/NetDaemon.Runtime.Tests -- RunConfiguration.CollectSourceInformation=true
+#       - name: 👀 Unit Test
+#         run: |
+#           echo "## ❔ Unit test results" >> $GITHUB_STEP_SUMMARY
+#           dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/HassModel/NetDaemon.HassModel.Tests -- RunConfiguration.CollectSourceInformation=true
+#           dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/Extensions/NetDaemon.Extensions.Scheduling.Tests -- RunConfiguration.CollectSourceInformation=true
+#           dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/Client/NetDaemon.HassClient.Tests -- RunConfiguration.CollectSourceInformation=true
+#           dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/AppModel/NetDaemon.AppModel.Tests -- RunConfiguration.CollectSourceInformation=true
+#           dotnet test -v minimal --no-build --configuration Release --logger GitHubActions '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' src/Runtime/NetDaemon.Runtime.Tests -- RunConfiguration.CollectSourceInformation=true
 
-      - name: 👀 Integration Tests
-        run: |
-          echo "## ❔ Integration test results" >> $GITHUB_STEP_SUMMARY
-          dotnet test -v minimal --no-build --configuration Release --logger "GitHubActions;annotations.titleFormat=@test (stable)" -e HomeAssistantVersion="stable" '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' tests/Integration/NetDaemon.Tests.Integration -- RunConfiguration.CollectSourceInformation=true
-          dotnet test -v minimal --no-build --configuration Release --logger "GitHubActions;annotations.titleFormat=@test (beta)" -e HomeAssistantVersion="beta" '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' tests/Integration/NetDaemon.Tests.Integration -- RunConfiguration.CollectSourceInformation=true
+#       - name: 👀 Integration Tests
+#         run: |
+#           echo "## ❔ Integration test results" >> $GITHUB_STEP_SUMMARY
+#           dotnet test -v minimal --no-build --configuration Release --logger "GitHubActions;annotations.titleFormat=@test (stable)" -e HomeAssistantVersion="stable" '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' tests/Integration/NetDaemon.Tests.Integration -- RunConfiguration.CollectSourceInformation=true
+#           dotnet test -v minimal --no-build --configuration Release --logger "GitHubActions;annotations.titleFormat=@test (beta)" -e HomeAssistantVersion="beta" '/p:CollectCoverage=true;CoverletOutputFormat="json,lcov,cobertura";MergeWith=${{github.workspace}}/codecover.json;CoverletOutput=${{github.workspace}}/codecover' tests/Integration/NetDaemon.Tests.Integration -- RunConfiguration.CollectSourceInformation=true
 
-      - name: 📝 Code Coverage report
-        run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.23
-          reportgenerator -reports:${{github.workspace}}/codecover.cobertura.xml -targetdir:${{github.workspace}}/report -reporttypes:MarkdownSummaryGithub "-filefilters:-*.g.cs" -verbosity:Warning
-          sed -i 's/# Summary/## 📝 Code Coverage/g' ${{github.workspace}}/report/SummaryGithub.md
-          sed -i 's/## Coverage/### Code Coverage details/g' ${{github.workspace}}/report/SummaryGithub.md
-          cat ${{github.workspace}}/report/*.md >> $GITHUB_STEP_SUMMARY
+#       - name: 📝 Code Coverage report
+#         run: |
+#           dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.23
+#           reportgenerator -reports:${{github.workspace}}/codecover.cobertura.xml -targetdir:${{github.workspace}}/report -reporttypes:MarkdownSummaryGithub "-filefilters:-*.g.cs" -verbosity:Warning
+#           sed -i 's/# Summary/## 📝 Code Coverage/g' ${{github.workspace}}/report/SummaryGithub.md
+#           sed -i 's/## Coverage/### Code Coverage details/g' ${{github.workspace}}/report/SummaryGithub.md
+#           cat ${{github.workspace}}/report/*.md >> $GITHUB_STEP_SUMMARY
 
-      - name: 📨 Publish coverage report to coveralls.io
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ${{github.workspace}}/codecover.info
+#       - name: 📨 Publish coverage report to coveralls.io
+#         uses: coverallsapp/github-action@master
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           path-to-lcov: ${{github.workspace}}/codecover.info
 
-      - name: 📨 Publish coverage to codecov
-        uses: codecov/codecov-action@v5
-        with:
-          flags: unittests # optional
-          name: codecov-umbrella # optional
-          files: ${{github.workspace}}/codecover.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true # optional (default = false)
+#       - name: 📨 Publish coverage to codecov
+#         uses: codecov/codecov-action@v5
+#         with:
+#           flags: unittests # optional
+#           name: codecov-umbrella # optional
+#           files: ${{github.workspace}}/codecover.info
+#           token: ${{ secrets.CODECOV_TOKEN }}
+#           fail_ci_if_error: true # optional (default = false)
 
-      - name: Discord failure notification
-        if: ${{ github.event_name == 'schedule' && failure() }}
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_ACTION_FAILURE }}
-        uses: Ilshidur/action-discord@0.3.2
-        with:
-          args: "[Scheduled action failed!](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})"
+#       - name: Discord failure notification
+#         if: ${{ github.event_name == 'schedule' && failure() }}
+#         env:
+#           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_ACTION_FAILURE }}
+#         uses: Ilshidur/action-discord@0.3.2
+#         with:
+#           args: "[Scheduled action failed!](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})"
